@@ -131,6 +131,36 @@ const excRate = async function (query) {
   }
 };
 
+const getHolidays = async function (month, countryCode) {
+  try {
+    const res = await axios({
+      method: "GET",
+      url: `https://date.nager.at/api/v2/PublicHolidays/2024/${countryCode}`,
+    });
+
+    if (res.status === 200) {
+      const holidaysArray = res.data;
+
+      const holidaysInMonth = holidaysArray.filter(
+        (hol) => parseInt(hol.date.split("-")[1]) === parseInt(month)
+      );
+      console.log(holidaysInMonth);
+      return holidaysInMonth;
+    } else if (res.status === 204) {
+      console.log("nothing found about holidays");
+      return [];
+    }
+  } catch (err) {
+    console.log(err.code, "could not find holiday info");
+  }
+};
+
+// api for holidays:
+// https://date.nager.at/api/v2/PublicHolidays/2024/US
+
+// api for weather:
+// https://history.openweathermap.org/data/2.5/aggregated/year?lat=35&lon=139&appid={API key} need to register
+
 // HELPER FUNCTIONS
 
 const getExchangeRateQuery = function (startCur, destCur) {
@@ -216,7 +246,7 @@ telegramBot.on("message", async (msg) => {
 
           telegramBot.sendMessage(
             chatId,
-            `Great! You are taveling to ${userState[chatId].destination}, ${userState[chatId].countryName}.`
+            `Great! You are traveling to ${userState[chatId].destination}, ${userState[chatId].countryName}.`
           );
 
           userState[chatId].currencies = [];
@@ -286,7 +316,7 @@ telegramBot.on("message", async (msg) => {
           const offeringMoreInformation = function () {
             telegramBot.sendMessage(
               chatId,
-              "If you would like more useful information please provide youre departure airport IATA."
+              "If you would like more useful information please provide your departure airport IATA."
             );
           };
 
@@ -365,6 +395,46 @@ telegramBot.on("message", async (msg) => {
                 : exchangeRateMsg
             }.`
           );
+          const inquireDate = function () {
+            telegramBot.sendMessage(
+              chatId,
+              `If you would also want some more information about upcoming holidays in your destination country or weather conditions please provide the month number of your trip.`
+            );
+          };
+          setTimeout(inquireDate, 2000);
+          // delete userState[chatId];
+          break;
+        }
+
+      case 3:
+        userState[chatId].date = messageText;
+        if (!userState[chatId].date) {
+          break;
+          delete userState[chatId];
+        } else {
+          const holidaysArray = await getHolidays(
+            userState[chatId].date,
+            userState[chatId].countryCode
+          );
+          console.log(holidaysArray);
+          if (holidaysArray.length > 0) {
+            const holidaysMessage = `Amazing! In the month of your trip, people in ${
+              userState[chatId].countryName
+            } celebrate these holidays: ${holidaysArray
+              .map(
+                (hol) => `${hol.name} (local: ${hol.localName}) on ${hol.date}`
+              )
+              .join(
+                ", "
+              )}. Please plan your trip accordingly and expect changes in business hours on these days.`;
+
+            telegramBot.sendMessage(chatId, holidaysMessage);
+          } else if (holidaysArray.length === 0) {
+            telegramBot.sendMessage(
+              chatId,
+              `Seems like there aren't any public holidays in this month in ${userState[chatId].countryName}. (keep in mind my database might not have all the holidays in all the countries at the moment. Sorry. We are working on it.)`
+            );
+          }
 
           const sendThanks = function () {
             telegramBot.sendMessage(
@@ -376,7 +446,6 @@ telegramBot.on("message", async (msg) => {
           delete userState[chatId];
           break;
         }
-
       default:
         telegramBot.sendMessage(chatId, "Oops! Something went wrong.");
         delete userState[chatId];
