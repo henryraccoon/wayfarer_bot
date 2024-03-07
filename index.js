@@ -41,9 +41,7 @@ const countryByCity = async (cityName) => {
     if (res.status === 200) {
       return res.data[0].country;
     }
-  } catch (err) {
-    console.log(err.code, "could not find a country by city");
-  }
+  } catch (err) {}
 };
 
 const infoAboutCountry = async (country) => {
@@ -56,9 +54,7 @@ const infoAboutCountry = async (country) => {
       const filteredResults = res.data.filter((co) => co.cca2 === country);
       return filteredResults[0];
     }
-  } catch (err) {
-    console.log(err.code, "could not find info about a country");
-  }
+  } catch (err) {}
 };
 
 const riskLevelCountry = async (country) => {
@@ -142,24 +138,17 @@ const getHolidays = async function (month, countryCode) {
       const holidaysArray = res.data;
 
       const holidaysInMonth = holidaysArray.filter(
-        (hol) => parseInt(hol.date.split("-")[1]) === parseInt(month)
+        (hol) => parseInt(hol.date.split("-")[1]) === month
       );
-      console.log(holidaysInMonth);
+
       return holidaysInMonth;
     } else if (res.status === 204) {
-      console.log("nothing found about holidays");
       return [];
     }
   } catch (err) {
     console.log(err.code, "could not find holiday info");
   }
 };
-
-// api for holidays:
-// https://date.nager.at/api/v2/PublicHolidays/2024/US
-
-// api for weather:
-// https://history.openweathermap.org/data/2.5/aggregated/year?lat=35&lon=139&appid={API key} need to register
 
 // HELPER FUNCTIONS
 
@@ -198,6 +187,7 @@ function parseUtcOffset(utcOffset) {
 
 telegramBot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
+
   telegramBot.sendMessage(
     msg.chat.id,
     `${msg.chat.first_name}, welcome to Wayfarer bot🖐️. I will be happy to provide all basic but useful information about your upcoming trip. Please let me know your destination airport IATA code. (three letters that you can see on your ticket 🫡)`
@@ -209,6 +199,13 @@ telegramBot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const messageText = msg.text;
 
+  const inquireCityName = function () {
+    telegramBot.sendMessage(
+      chatId,
+      `Try typing the NAME of your departure CITY now. `
+    );
+  };
+
   if (messageText === "/start") return;
 
   if (userState[chatId]) {
@@ -216,7 +213,12 @@ telegramBot.on("message", async (msg) => {
 
     switch (step) {
       case 1:
-        userState[chatId].destination = await cityByIata(messageText);
+        if (!userState[chatId].errorWithDestCityName) {
+          userState[chatId].destination = await cityByIata(messageText);
+        } else {
+          userState[chatId].destination = messageText;
+        }
+
         userState[chatId].countryCode = await countryByCity(
           userState[chatId].destination
         );
@@ -226,20 +228,22 @@ telegramBot.on("message", async (msg) => {
         );
 
         if (!userState[chatId].destination) {
-          console.log("something went wrong in step 1");
           telegramBot.sendMessage(
             chatId,
-            ` Something went wrong, because I couldn't find a city airport with that IATA. Maybe try again from the /start? If problem persists, maybe this airport is just isn't in my database. Sorry. I know I'm not perfect... But I will try to get better. 😔  `
+            ` Something went wrong, because I couldn't find a city airport with that IATA. Maybe this airport is just isn't in my database. Sorry. You can try typing the name of your destination city. `
           );
+          userState[chatId].errorWithDestCityName = true;
+
+          setTimeout(inquireCityName, 1000);
           break;
-          delete userState[chatId];
         } else if (!countryInfo) {
           telegramBot.sendMessage(
             chatId,
-            ` Something went wrong, because I could find that you're going to ${userState[chatId].destination}, but I couldn't find information about a country... That happens when city names change, but aren't updated in all databases. Sorry. I know I'm not perfect... But I will try to get better. 😔 `
+            ` Something went wrong, because I could find that you're going to ${userState[chatId].destination}, but I couldn't find information about a country... That happens when city names change, but aren't updated in all databases. Sorry. If you know any other name of the city or different spelling try typing it now. `
           );
+          userState[chatId].errorWithDestCityName = true;
+          setTimeout(inquireCityName, 1000);
           break;
-          delete userState[chatId];
         } else {
           userState[chatId].countryName = countryInfo.name.common;
           userState[chatId].step = 2;
@@ -330,18 +334,23 @@ telegramBot.on("message", async (msg) => {
         }
 
       case 2:
-        userState[chatId].start = await cityByIata(messageText);
+        if (!userState[chatId].errorWithStartCityName) {
+          userState[chatId].start = await cityByIata(messageText);
+        } else {
+          userState[chatId].start = messageText;
+        }
+
         if (!userState[chatId].start) {
           telegramBot.sendMessage(
             chatId,
-            ` Something went wrong, because I couldn't find a city airport with that IATA. Maybe try again from the /start? If problem persists, maybe this airport is just isn't in my database. Sorry. I know I'm not perfect... But I will try to get better. 😔  `
+            ` Something went wrong, because I couldn't find a city airport with that IATA. Maybe try again from the /start? If problem persists, maybe this airport is just isn't in my database. Sorry. You can try typing the name of your departure city.  `
           );
 
+          userState[chatId].errorWithStartCityName = true;
+          setTimeout(inquireCityName, 1000);
           break;
           delete userState[chatId];
         } else {
-          userState[chatId].step = 3;
-
           userState[chatId].startCountryCode = await countryByCity(
             userState[chatId].start
           );
@@ -353,10 +362,11 @@ telegramBot.on("message", async (msg) => {
           if (!startCountryInfo) {
             telegramBot.sendMessage(
               chatId,
-              ` Something went wrong, because I could find that your departure city is ${userState[chatId].start}, but I couldn't find information about a country... That happens when city names change, but aren't updated in all databases. And in this case, unfortunately, I won't be able to provide more information. Sorry. I know I'm not perfect... But I will try to get better. 😔 `
+              ` Something went wrong, because I could find that your departure city is ${userState[chatId].start}, but I couldn't find information about a country... That happens when city names change, but aren't updated in all databases.If you know any other name of the city or different spelling try typing it now. `
             );
+            userState[chatId].errorWithStartCityName = true;
+            setTimeout(inquireCityName, 1000);
             break;
-            delete userState[chatId];
           }
 
           userState[chatId].startCurCode = Object.keys(
@@ -398,25 +408,34 @@ telegramBot.on("message", async (msg) => {
           const inquireDate = function () {
             telegramBot.sendMessage(
               chatId,
-              `If you would also want some more information about upcoming holidays in your destination country or weather conditions please provide the month number of your trip.`
+              `If you would also want some information about upcoming holidays in your destination country please provide the month NUMBER of your trip.`
             );
           };
           setTimeout(inquireDate, 2000);
-          // delete userState[chatId];
+          userState[chatId].step = 3;
+
           break;
         }
 
       case 3:
-        userState[chatId].date = messageText;
-        if (!userState[chatId].date) {
+        userState[chatId].date = parseInt(messageText);
+
+        if (
+          !userState[chatId].date ||
+          userState[chatId].date < 0 ||
+          userState[chatId].date > 12
+        ) {
+          telegramBot.sendMessage(
+            chatId,
+            `That's a strange month... 🧐 Are you sure you typed number from 1 to 12? I received this: ${messageText}, which doesn't look right... Maybe try again? `
+          );
           break;
-          delete userState[chatId];
         } else {
           const holidaysArray = await getHolidays(
             userState[chatId].date,
             userState[chatId].countryCode
           );
-          console.log(holidaysArray);
+
           if (holidaysArray.length > 0) {
             const holidaysMessage = `Amazing! In the month of your trip, people in ${
               userState[chatId].countryName
@@ -447,7 +466,10 @@ telegramBot.on("message", async (msg) => {
           break;
         }
       default:
-        telegramBot.sendMessage(chatId, "Oops! Something went wrong.");
+        telegramBot.sendMessage(
+          chatId,
+          "Oops! Something went wrong. Try again with /start"
+        );
         delete userState[chatId];
     }
   } else {
