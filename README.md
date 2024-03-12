@@ -10,3 +10,5 @@ Just type in airport IATA codes and number of month of your trip and get all bas
  - Public holidays.
 
 To be continued...
+
+Try yourself: @wayfarer_help_bot
