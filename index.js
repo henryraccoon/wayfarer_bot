@@ -179,6 +179,8 @@ function parseUtcOffset(utcOffset) {
 exports.handler = async (event) => {
   const body = JSON.parse(event.body);
 
+  console.log(event);
+
   // Handle incoming Telegram messages
 
   if (body.message) {
@@ -190,11 +192,17 @@ exports.handler = async (event) => {
         chatId,
         `${body.message.chat.first_name}, welcome to Wayfarer bot🖐️. I will be happy to provide all basic but useful information about your upcoming trip. Please let me know your departure airport IATA, destination airport IATA code and month NUMBER of your upcoming trip. (e.g. LGW-KUL-5). Please use dashes/minuses in between.`
       );
-      return;
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ message: "Fail" }),
+      };
     }
 
     if (!messageText || messageText.length < 9 || messageText.length > 50) {
-      return;
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ message: "Fail" }),
+      };
     }
 
     const words = messageText.split("-");
@@ -212,7 +220,10 @@ exports.handler = async (event) => {
         chatId,
         `Oops, something went wrong with IATA that you've provided. If problem persists please try using CITY NAMES instead of IATA.`
       );
-      return;
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ message: "Fail" }),
+      };
     }
 
     if (!userData.date || userData.date < 0 || userData.date > 12) {
@@ -220,7 +231,10 @@ exports.handler = async (event) => {
         chatId,
         `That's a strange month... 🧐 Are you sure you typed number from 1 to 12? I received this: ${words[2]}, which doesn't look right... Maybe try again? `
       );
-      return;
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ message: "Fail" }),
+      };
     }
 
     userData.departureCountryCode = await countryByCity(userData.departureCity);
@@ -233,7 +247,10 @@ exports.handler = async (event) => {
         chatId,
         `Something went wrong, because I could find that you're traveling from ${userData.departureCity}, but I couldn't find information about a country... That happens when city names change, but aren't updated in all databases. Sorry. If you know any other name of the city or different spelling you can try using CITY NAMES instead of IATA.`
       );
-      return;
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ message: "Fail" }),
+      };
     }
 
     if (!userData.destinationCountryCode) {
