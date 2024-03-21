@@ -4,7 +4,7 @@ const axios = require("axios");
 const TELEGRAM_BOT_API_KEY = process.env.TELEGRAM_BOT_API_KEY;
 const telegramBot = new TelegramBot(TELEGRAM_BOT_API_KEY, { polling: false });
 
-const cityByIata = async (iata) => {
+exports.cityByIata = async (iata) => {
   try {
     const optionsObj = {
       headers: {
@@ -25,7 +25,7 @@ const cityByIata = async (iata) => {
   }
 };
 
-const countryByCity = async (cityName) => {
+exports.countryByCity = async (cityName) => {
   try {
     const res = await axios.get(
       `https://api.api-ninjas.com/v1/city?name=${cityName}`,
@@ -57,7 +57,7 @@ const infoAboutCountry = async (country) => {
   } catch (err) {}
 };
 
-const riskLevelCountry = async (country) => {
+exports.riskLevelCountry = async (country) => {
   try {
     const res = await axios.get(
       `https://www.travel-advisory.info/api?countrycode=${country}`
@@ -151,7 +151,7 @@ const getHolidays = async function (month, countryCode) {
 
 // HELPER FUNCTIONS
 
-const getExchangeRateQuery = function (startCur, destCur) {
+exports.getExchangeRateQuery = function (startCur, destCur) {
   if (startCur.length === 1 && destCur.length === 1) {
     const query = [...startCur, ...destCur].join("/");
 
@@ -182,7 +182,7 @@ function parseUtcOffset(utcOffset) {
   return offsetMinutes;
 }
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
   const body = JSON.parse(event.body);
 
   console.log(event);
@@ -413,11 +413,4 @@ export const handler = async (event) => {
     statusCode: 200,
     body: JSON.stringify({ message: "Success" }),
   };
-};
-
-module.exports = {
-  cityByIata,
-  riskLevelCountry,
-  countryByCity,
-  getExchangeRateQuery,
 };
