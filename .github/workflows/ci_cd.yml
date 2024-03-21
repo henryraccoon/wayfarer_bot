@@ -24,6 +24,22 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Archive deployment package
+        run: zip -r deployment_package.zip .
+
+      - name: Setup AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET }}
+          aws-region: eu-west-2
+
+      - name: Upload zip to s3
+        run: aws s3 cp deployment_package.zip s3://telebottest123/my_bot.zip
+
+      - name: Clean Up
+        run: rm deployment_package.zip
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -36,14 +52,5 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET }}
           aws-region: eu-west-2
 
-      - name: Archive deployment package
-        run: zip -r deployment_package.zip .
-
-      - name: Upload zip to s3
-        run: aws s3 cp deployment_package.zip s3://telebottest123/my_bot.zip
-
       - name: Update Lambda
         run: aws lambda update-function-code --function-name test_bot --s3-bucket telebottest123 --s3-key my_bot.zip
-
-      - name: Clean Up
-        run: rm deployment_package.zip
