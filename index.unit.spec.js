@@ -25,7 +25,6 @@ describe("cityByIata", () => {
   });
 
   test("handles invalid IATA code gracefully", async () => {
-    // Mock Axios response for an invalid IATA code
     axios.get.mockRejectedValue(new Error("Missing API Key."));
 
     jest.spyOn(console, "log").mockImplementation();
@@ -51,7 +50,6 @@ describe("countryByCity", () => {
   });
 
   test("handles invalid data gracefully", async () => {
-    // Mock Axios response for an invalid IATA code
     axios.get.mockRejectedValue(new Error("Couldn't find country"));
 
     await expect(countryByCity("Hambelton")).rejects.toThrow(
