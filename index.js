@@ -6,35 +6,42 @@ const telegramBot = new TelegramBot(TELEGRAM_BOT_API_KEY, { polling: false });
 
 const cityByIata = async (iata) => {
   try {
-    const res = await axios({
-      method: "GET",
-      url: `https://api.api-ninjas.com/v1/airports?iata=${iata}`,
+    const optionsObj = {
       headers: {
         "X-Api-Key": process.env.API_NINJAS_KEY,
       },
-    });
+    };
+    const res = await axios.get(
+      `https://api.api-ninjas.com/v1/airports?iata=${iata}`,
+      optionsObj
+    );
 
     if (res.status === 200) {
       return res.data[0].city;
     }
   } catch (err) {
-    console.log(err.code);
+    console.log(err);
+    throw err;
   }
 };
 
 const countryByCity = async (cityName) => {
   try {
-    const res = await axios({
-      method: "GET",
-      url: `https://api.api-ninjas.com/v1/city?name=${cityName}`,
-      headers: {
-        "X-Api-Key": process.env.API_NINJAS_KEY,
-      },
-    });
+    const res = await axios.get(
+      `https://api.api-ninjas.com/v1/city?name=${cityName}`,
+      {
+        headers: {
+          "X-Api-Key": process.env.API_NINJAS_KEY,
+        },
+      }
+    );
+
     if (res.status === 200) {
       return res.data[0].country;
     }
-  } catch (err) {}
+  } catch (err) {
+    throw err;
+  }
 };
 
 const infoAboutCountry = async (country) => {
@@ -52,10 +59,9 @@ const infoAboutCountry = async (country) => {
 
 const riskLevelCountry = async (country) => {
   try {
-    const res = await axios({
-      method: "GET",
-      url: `https://www.travel-advisory.info/api?countrycode=${country}`,
-    });
+    const res = await axios.get(
+      `https://www.travel-advisory.info/api?countrycode=${country}`
+    );
     if (res.status === 200) {
       return res.data.data;
     }
@@ -176,6 +182,13 @@ function parseUtcOffset(utcOffset) {
   return offsetMinutes;
 }
 
+module.exports = {
+  cityByIata,
+  riskLevelCountry,
+  countryByCity,
+  getExchangeRateQuery,
+};
+
 exports.handler = async (event) => {
   const body = JSON.parse(event.body);
 
@@ -194,7 +207,7 @@ exports.handler = async (event) => {
       );
       return {
         statusCode: 200,
-        body: JSON.stringify({ message: "Fail" }),
+        body: JSON.stringify({ message: "Success" }),
       };
     }
 
