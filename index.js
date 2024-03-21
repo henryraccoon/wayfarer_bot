@@ -182,13 +182,6 @@ function parseUtcOffset(utcOffset) {
   return offsetMinutes;
 }
 
-module.exports = {
-  cityByIata,
-  riskLevelCountry,
-  countryByCity,
-  getExchangeRateQuery,
-};
-
 exports.handler = async (event) => {
   const body = JSON.parse(event.body);
 
@@ -420,4 +413,11 @@ exports.handler = async (event) => {
     statusCode: 200,
     body: JSON.stringify({ message: "Success" }),
   };
+};
+
+module.exports = {
+  cityByIata,
+  riskLevelCountry,
+  countryByCity,
+  getExchangeRateQuery,
 };
