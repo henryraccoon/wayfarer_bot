@@ -182,7 +182,7 @@ function parseUtcOffset(utcOffset) {
   return offsetMinutes;
 }
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   const body = JSON.parse(event.body);
 
   console.log(event);
