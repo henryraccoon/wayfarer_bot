@@ -26,20 +26,21 @@ const cityByIata = async (iata) => {
 
 const countryByCity = async (cityName) => {
   try {
+    optionsObj = {
+      headers: {
+        "X-Api-Key": process.env.API_NINJAS_KEY,
+      },
+    };
     const res = await axios.get(
       `https://api.api-ninjas.com/v1/city?name=${cityName}`,
-      {
-        headers: {
-          "X-Api-Key": process.env.API_NINJAS_KEY,
-        },
-      }
+      optionsObj
     );
-    console.log(res);
+
     if (res.status === 200) {
       return res.data[0].country;
     }
   } catch (err) {
-    console.log(err.message);
+    console.log(err);
   }
 };
 
