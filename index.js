@@ -21,7 +21,7 @@ const cityByIata = async (iata) => {
     }
   } catch (err) {
     console.log(err.message);
-    
+  }
 };
 
 const countryByCity = async (cityName) => {
@@ -39,7 +39,7 @@ const countryByCity = async (cityName) => {
       return res.data[0].country;
     }
   } catch (err) {
-    console.log(err.message)
+    console.log(err.message);
   }
 };
 
