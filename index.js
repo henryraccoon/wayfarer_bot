@@ -4,7 +4,7 @@ const axios = require("axios");
 const TELEGRAM_BOT_API_KEY = process.env.TELEGRAM_BOT_API_KEY;
 const telegramBot = new TelegramBot(TELEGRAM_BOT_API_KEY, { polling: false });
 
-exports.cityByIata = async (iata) => {
+const cityByIata = async (iata) => {
   try {
     const optionsObj = {
       headers: {
@@ -25,7 +25,7 @@ exports.cityByIata = async (iata) => {
   }
 };
 
-exports.countryByCity = async (cityName) => {
+const countryByCity = async (cityName) => {
   try {
     const res = await axios.get(
       `https://api.api-ninjas.com/v1/city?name=${cityName}`,
@@ -46,10 +46,10 @@ exports.countryByCity = async (cityName) => {
 
 const infoAboutCountry = async (country) => {
   try {
-    const res = await axios({
-      method: "GET",
-      url: `https://restcountries.com/v3.1/name/${country}`,
-    });
+    const res = await axios.get(
+      `https://restcountries.com/v3.1/name/${country}`
+    );
+
     if (res.status === 200) {
       const filteredResults = res.data.filter((co) => co.cca2 === country);
       return filteredResults[0];
@@ -57,7 +57,7 @@ const infoAboutCountry = async (country) => {
   } catch (err) {}
 };
 
-exports.riskLevelCountry = async (country) => {
+const riskLevelCountry = async (country) => {
   try {
     const res = await axios.get(
       `https://www.travel-advisory.info/api?countrycode=${country}`
@@ -72,10 +72,9 @@ exports.riskLevelCountry = async (country) => {
 
 const emergencyServicesByCountry = async (country) => {
   try {
-    const res = await axios({
-      method: "GET",
-      url: `https://emergencynumberapi.com/api/country/${country}`,
-    });
+    const res = await axios.get(
+      `https://emergencynumberapi.com/api/country/${country}`
+    );
     if (res.status === 200) {
       return res.data.data;
     }
@@ -86,21 +85,21 @@ const emergencyServicesByCountry = async (country) => {
 
 const getTimeZoneOffset = async (city) => {
   try {
-    const res = await axios({
-      method: "GET",
-      url: `https://api.api-ninjas.com/v1/timezone?city=${city}`,
-      headers: {
-        "X-Api-Key": process.env.API_NINJAS_KEY,
-      },
-    });
+    const res = await axios.get(
+      `https://api.api-ninjas.com/v1/timezone?city=${city}`,
+      {
+        headers: {
+          "X-Api-Key": process.env.API_NINJAS_KEY,
+        },
+      }
+    );
 
     if (res.status === 200) {
       const tzName = res.data.timezone;
 
-      const resp = await axios({
-        method: "GET",
-        url: `https://worldtimeapi.org/api/timezone/${tzName}`,
-      });
+      const resp = await axios.get(
+        `https://worldtimeapi.org/api/timezone/${tzName}`
+      );
 
       if (resp.status === 200) {
         return resp.data.utc_offset;
@@ -113,10 +112,9 @@ const getTimeZoneOffset = async (city) => {
 
 const excRate = async function (query) {
   try {
-    const res = await axios({
-      method: "GET",
-      url: `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_RATE_API_KEY}/pair/${query}`,
-    });
+    const res = await axios.get(
+      `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_RATE_API_KEY}/pair/${query}`
+    );
 
     if (res.status === 200) {
       return res.data.conversion_rate;
@@ -128,10 +126,9 @@ const excRate = async function (query) {
 
 const getHolidays = async function (month, countryCode) {
   try {
-    const res = await axios({
-      method: "GET",
-      url: `https://date.nager.at/api/v2/PublicHolidays/2024/${countryCode}`,
-    });
+    const res = await axios.get(
+      `https://date.nager.at/api/v2/PublicHolidays/2024/${countryCode}`
+    );
 
     if (res.status === 200) {
       const holidaysArray = res.data;
@@ -151,7 +148,7 @@ const getHolidays = async function (month, countryCode) {
 
 // HELPER FUNCTIONS
 
-exports.getExchangeRateQuery = function (startCur, destCur) {
+const getExchangeRateQuery = function (startCur, destCur) {
   if (startCur.length === 1 && destCur.length === 1) {
     const query = [...startCur, ...destCur].join("/");
 
@@ -184,8 +181,6 @@ function parseUtcOffset(utcOffset) {
 
 exports.handler = async (event) => {
   const body = JSON.parse(event.body);
-
-  console.log(event);
 
   // Handle incoming Telegram messages
 
@@ -267,10 +262,10 @@ exports.handler = async (event) => {
       return;
     }
 
-    userData.departureCountryInfo = await await infoAboutCountry(
+    userData.departureCountryInfo = await infoAboutCountry(
       userData.departureCountryCode
     );
-    userData.destinationCountryInfo = await await infoAboutCountry(
+    userData.destinationCountryInfo = await infoAboutCountry(
       userData.destinationCountryCode
     );
 
@@ -413,4 +408,12 @@ exports.handler = async (event) => {
     statusCode: 200,
     body: JSON.stringify({ message: "Success" }),
   };
+};
+
+module.exports = {
+  handler: exports.handler,
+  countryByCity,
+  cityByIata,
+  riskLevelCountry,
+  getExchangeRateQuery,
 };
