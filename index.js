@@ -34,7 +34,7 @@ const countryByCity = async (cityName) => {
         },
       }
     );
-
+    console.log(res);
     if (res.status === 200) {
       return res.data[0].country;
     }
@@ -53,7 +53,9 @@ const infoAboutCountry = async (country) => {
       const filteredResults = res.data.filter((co) => co.cca2 === country);
       return filteredResults[0];
     }
-  } catch (err) {}
+  } catch (err) {
+    console.log(err.message);
+  }
 };
 
 const riskLevelCountry = async (country) => {
