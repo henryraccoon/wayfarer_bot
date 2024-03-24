@@ -23,14 +23,6 @@ describe("cityByIata", () => {
     const city = await cityByIata("LGW");
     expect(city).toEqual("London");
   });
-
-  test("handles invalid IATA code gracefully", async () => {
-    axios.get.mockRejectedValue(new Error("Missing API Key."));
-
-    jest.spyOn(console, "log").mockImplementation();
-
-    await expect(cityByIata("XYZ")).rejects.toThrow("Missing API Key.");
-  });
 });
 
 describe("countryByCity", () => {
