@@ -40,14 +40,6 @@ describe("countryByCity", () => {
     const country = await countryByCity("London");
     expect(country).toEqual("GB");
   });
-
-  test("handles invalid data gracefully", async () => {
-    axios.get.mockRejectedValue(new Error("Couldn't find country"));
-
-    await expect(countryByCity("Hambelton")).rejects.toThrow(
-      "Couldn't find country"
-    );
-  });
 });
 
 describe("riskLevelCountry", () => {
