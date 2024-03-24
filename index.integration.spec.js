@@ -15,11 +15,25 @@ jest.mock("axios", () => ({
     })
     .mockResolvedValueOnce({
       status: 200,
-      data: [{ country: "GB" }],
+      // data: [{ country: "GB" }],
+      data: {
+        geonames: [
+          {
+            countryCode: "GB",
+          },
+        ],
+      },
     })
     .mockResolvedValueOnce({
       status: 200,
-      data: [{ country: "MY" }],
+      // data: [{ country: "MY" }],
+      data: {
+        geonames: [
+          {
+            countryCode: "MY",
+          },
+        ],
+      },
     })
     .mockResolvedValueOnce({
       status: 200,

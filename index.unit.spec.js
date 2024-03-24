@@ -33,7 +33,14 @@ describe("countryByCity", () => {
   test("countryByCity returns country", async () => {
     const resp = {
       status: 200,
-      data: [{ country: "GB" }],
+      // data: [{ country: "GB" }],
+      data: {
+        geonames: [
+          {
+            countryCode: "GB",
+          },
+        ],
+      },
     };
     axios.get.mockResolvedValue(resp);
 

@@ -26,18 +26,22 @@ const cityByIata = async (iata) => {
 
 const countryByCity = async (cityName) => {
   try {
-    optionsObj = {
-      headers: {
-        "X-Api-Key": process.env.API_NINJAS_KEY,
-      },
-    };
-    const res = await axios.get(
-      `https://api.api-ninjas.com/v1/city?name=${cityName}`,
-      optionsObj
-    );
+    // optionsObj = {
+    //   headers: {
+    //     "X-Api-Key": process.env.API_NINJAS_KEY,
+    //   },
+    // };
+    // const res = await axios.get(
+    //   `https://api.api-ninjas.com/v1/city?name=${cityName}`,
+    //   optionsObj
+    // );
+    const res =
+      await axios.get(`http://api.geonames.org/searchJSON?name=${cityName}&maxRows=1&username=henryraccoon
+    `);
 
     if (res.status === 200) {
-      return res.data[0].country;
+      return res.data.geonames[0].countryCode;
+      // return res.data[0].country;
     }
   } catch (err) {
     console.log(err);
